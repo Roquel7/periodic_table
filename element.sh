@@ -5,14 +5,17 @@ if [[ -z $1 ]]
 then
   echo "Please provide an element as an argument."
 else
-  # Join the proerties and the elements tables
+  # Join the proerties and the elements tables. 
+  # This looks up the element by the atomic number.
   if [[ $1 =~ ^[0-9]+$ ]]
   then
 
     ELEMENT_NUMBER=$($PSQL "SELECT atomic_number, name, symbol, type, atomic_mass, melting_point_celsius, boiling_point_celsius FROM properties 
-                          LEFT JOIN elements
-                          USING(atomic_number)
-                          WHERE atomic_number = $1")
+                            INNER JOIN types
+                            USING(type_id)
+                            INNER JOIN elements
+                            USING(atomic_number)
+                            WHERE atomic_number = $1")
 
     echo "$ELEMENT_NUMBER" | while read ATOMIC_NUMBER BAR NAME BAR SYMBOL BAR TYPE BAR ATOMIC_MASS BAR MELTING_POINT_CELSIUS BAR BOILING_POINT_CELSIUS
     do
@@ -20,8 +23,11 @@ else
     done
 
     else
-      ELEMENT_NAME=$($PSQL "SELECT atomic_number, name, symbol, type, atomic_mass, melting_point_celsius, boiling_point_celsius FROM properties
-                            LEFT JOIN elements
+      # This part looks for the element based on the name or the symbol. 
+      ELEMENT_NAME=$($PSQL "SELECT atomic_number, name, symbol, type, atomic_mass, melting_point_celsius, boiling_point_celsius FROM properties 
+                            INNER JOIN types
+                            USING(type_id)
+                            INNER JOIN elements
                             USING(atomic_number)
                             WHERE symbol = '$1'
                             OR name = '$1'")
